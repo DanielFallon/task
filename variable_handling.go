@@ -7,11 +7,10 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"runtime"
 	"strings"
-	"text/template"
 
 	"github.com/BurntSushi/toml"
+	"github.com/go-task/helper"
 	"gopkg.in/yaml.v2"
 )
 
@@ -32,8 +31,8 @@ func handleDynamicVariableContent(value string) (string, error) {
 		return result, nil
 	}
 	var cmd *exec.Cmd
-	if ShExists {
-		cmd = exec.Command(ShPath, "-c", value[1:])
+	if helper.ShExists {
+		cmd = exec.Command(helper.ShPath, "-c", value[1:])
 	} else {
 		cmd = exec.Command("cmd", "/C", value[1:])
 	}
@@ -78,25 +77,6 @@ func (t *Task) handleVariables() (map[string]string, error) {
 		localVariables[key] = value
 	}
 	return localVariables, nil
-}
-
-var templateFuncs = template.FuncMap{
-	"OS":   func() string { return runtime.GOOS },
-	"ARCH": func() string { return runtime.GOARCH },
-	"IsSH": func() bool { return ShExists },
-}
-
-// ReplaceVariables writes vars into initial string
-func ReplaceVariables(initial string, vars map[string]string) (string, error) {
-	t, err := template.New("").Funcs(templateFuncs).Parse(initial)
-	if err != nil {
-		return "", err
-	}
-	b := bytes.NewBuffer(nil)
-	if err = t.Execute(b, vars); err != nil {
-		return "", err
-	}
-	return b.String(), nil
 }
 
 // GetEnvironmentVariables returns environment variables as map

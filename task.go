@@ -1,22 +1,16 @@
 package task
 
 import (
-	"fmt"
 	"log"
-	"os"
-	"os/exec"
-	"strings"
 
+	"github.com/go-task/helper"
+	"github.com/go-task/task/producer"
 	"github.com/spf13/pflag"
 )
 
 var (
 	// TaskFilePath is the default Taskfile
 	TaskFilePath = "Taskfile"
-	// ShExists is true if Bash was found
-	ShExists bool
-	// ShPath constains the Bash path if found
-	ShPath string
 
 	// Force (--force or -f flag) forces a task to run even when it's up-to-date
 	Force bool
@@ -26,15 +20,6 @@ var (
 
 	runnedTasks = make(map[string]struct{})
 )
-
-func init() {
-	var err error
-	ShPath, err = exec.LookPath("sh")
-	if err != nil {
-		return
-	}
-	ShExists = true
-}
 
 // Task represents a task
 type Task struct {
@@ -64,15 +49,25 @@ func Run() {
 		log.Fatal(err)
 	}
 
+	err = currentProducer.StartRun()
+	if err != nil {
+		log.Fatal(err)
+	}
 	for _, a := range args {
 		if err = RunTask(a); err != nil {
 			log.Fatal(err)
 		}
 	}
+	err = currentProducer.FinishRun()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // RunTask runs a task by its name
 func RunTask(name string) error {
+	currentProducer.RunTask(name)
+
 	if _, found := runnedTasks[name]; found {
 		return &cyclicDepError{name}
 	}
@@ -89,7 +84,7 @@ func RunTask(name string) error {
 	}
 
 	for _, d := range t.Deps {
-		d, err = ReplaceVariables(d, vars)
+		d, err = helper.ReplaceVariables(d, vars)
 		if err != nil {
 			return err
 		}
@@ -104,6 +99,7 @@ func RunTask(name string) error {
 	}
 
 	for i := range t.Cmds {
+		// t.runCommand(i)
 		if err = t.runCommand(i); err != nil {
 			return &taskRunError{name, err}
 		}
@@ -134,50 +130,5 @@ func (t *Task) runCommand(i int) error {
 	if err != nil {
 		return err
 	}
-	c, err := ReplaceVariables(t.Cmds[i], vars)
-	if err != nil {
-		return err
-	}
-	dir, err := ReplaceVariables(t.Dir, vars)
-	if err != nil {
-		return err
-	}
-	var cmd *exec.Cmd
-	if ShExists {
-		cmd = exec.Command(ShPath, "-c", c)
-	} else {
-		cmd = exec.Command("cmd", "/C", c)
-	}
-	if dir != "" {
-		cmd.Dir = dir
-	}
-	if t.Env != nil {
-		cmd.Env = os.Environ()
-		for key, value := range t.Env {
-			replacedValue, err := ReplaceVariables(value, vars)
-			if err != nil {
-				return err
-			}
-			replacedKey, err := ReplaceVariables(key, vars)
-			if err != nil {
-				return err
-			}
-			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", replacedKey, replacedValue))
-		}
-	}
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-	if t.Set != "" {
-		bytes, err := cmd.Output()
-		if err != nil {
-			return err
-		}
-		os.Setenv(t.Set, strings.TrimSpace(string(bytes)))
-		return nil
-	}
-	cmd.Stdout = os.Stdout
-	if err = cmd.Run(); err != nil {
-		return err
-	}
-	return nil
+	return currentProducer.RunCommand(t.Cmds[i], vars, producer.CommandOptions{Dir: t.Dir, Env: t.Env, Set: t.Set, Vars: t.Vars})
 }
