@@ -9,14 +9,6 @@ import (
 	"github.com/go-task/helper"
 )
 
-// CommandOptions provide the producer with some options for the command to be executed
-type CommandOptions struct {
-	Dir  string
-	Vars map[string]string
-	Set  string
-	Env  map[string]string
-}
-
 // ExecProducer is the default producer for a task run
 type ExecProducer struct {
 }
