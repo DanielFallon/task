@@ -39,13 +39,14 @@ type Task struct {
 func Run() {
 	log.SetFlags(0)
 
+	if err := setProducer(); err != nil {
+		log.Fatal(err)
+	}
+
 	args := pflag.Args()
 	if len(args) == 0 {
 		log.Println("task: No argument given, trying default task")
 		args = []string{"default"}
-	}
-	if err := setProducer(); err != nil {
-		log.Fatal(err)
 	}
 
 	var err error
