@@ -6,13 +6,11 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
-	"runtime"
 	"strings"
 
 	"github.com/go-task/task/execext"
 
 	"github.com/BurntSushi/toml"
-	"github.com/go-task/helper"
 	"gopkg.in/yaml.v2"
 )
 
