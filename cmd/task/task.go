@@ -25,6 +25,7 @@ hello:
 `)
 		pflag.PrintDefaults()
 	}
+	pflag.StringVarP(&task.ProducerFlag, "producer", "p", "exec", "Provide producer information, defaulting to exec")
 	pflag.BoolVarP(&task.Force, "force", "f", false, "forces execution even when the task is up-to-date")
 	pflag.Parse()
 	task.Run()

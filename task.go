@@ -14,6 +14,8 @@ var (
 
 	// Force (--force or -f flag) forces a task to run even when it's up-to-date
 	Force bool
+	// ProducerFlag (--producer od -p flag sets the producer to use)
+	ProducerFlag string
 
 	// Tasks constains the tasks parsed from Taskfile
 	Tasks = make(map[string]*Task)
@@ -41,6 +43,9 @@ func Run() {
 	if len(args) == 0 {
 		log.Println("task: No argument given, trying default task")
 		args = []string{"default"}
+	}
+	if err := setProducer(); err != nil {
+		log.Fatal(err)
 	}
 
 	var err error

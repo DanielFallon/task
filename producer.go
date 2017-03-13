@@ -14,6 +14,16 @@ type Producer interface {
 	FinishRun() error
 }
 
+func setProducer() error {
+	switch ProducerFlag {
+	case "exec":
+		currentProducer = producer.ExecProducer{}
+	case "bash":
+		currentProducer = producer.BashProducer{}
+	}
+	return nil
+}
+
 func init() {
 	currentProducer = producer.ExecProducer{}
 }
