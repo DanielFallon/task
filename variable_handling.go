@@ -6,8 +6,10 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
-	"os/exec"
+	"runtime"
 	"strings"
+
+	"github.com/go-task/task/execext"
 
 	"github.com/BurntSushi/toml"
 	"github.com/go-task/helper"
@@ -30,12 +32,7 @@ func handleDynamicVariableContent(value string) (string, error) {
 	if result, ok := varCmds[value]; ok {
 		return result, nil
 	}
-	var cmd *exec.Cmd
-	if helper.ShExists {
-		cmd = exec.Command(helper.ShPath, "-c", value[1:])
-	} else {
-		cmd = exec.Command("cmd", "/C", value[1:])
-	}
+	cmd := execext.NewCommand(value[1:])
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	b, err := cmd.Output()

@@ -2,9 +2,11 @@ package task
 
 import (
 	"log"
+	"os"
 
 	"github.com/go-task/helper"
 	"github.com/go-task/task/producer"
+	"github.com/go-task/task/execext"
 	"github.com/spf13/pflag"
 )
 
